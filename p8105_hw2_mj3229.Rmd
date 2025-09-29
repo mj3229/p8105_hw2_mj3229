@@ -14,11 +14,12 @@ polsmonth_df =
   read_csv("./fivethirtyeight_datasets/pols-month.csv") %>% 
   janitor::clean_names() %>% 
   separate(mon, into = c("year", "month", "day")) %>% 
-  mutate(president = prez_gop + prez_dem) %>% 
+  mutate(month = month(as.integer(month), label = TRUE, abbr = FALSE)) %>% 
+  mutate(president = if_else(prez_gop == 1, "gop", "dem")) %>% 
   select(-prez_gop, -prez_dem, -day)
 ```
 
-**Cleaning snp.csv data**
+**Cleaning snp data**
 ```{r}
 snp_df =
   read_csv("./fivethirtyeight_datasets/snp.csv") %>% 
@@ -37,5 +38,7 @@ unemployment_df =
     names_to = "month",
     values_to = "percentage of unemployment")
 ```
+
+
 
 
