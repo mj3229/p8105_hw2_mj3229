@@ -6,6 +6,7 @@ output: github_document
 
 ```{r setup}
 library(tidyverse)
+library(readxl)
 ```
 
 ## Problem 1
@@ -25,6 +26,8 @@ snp_df =
   read_csv("./fivethirtyeight_datasets/snp.csv") %>% 
   janitor::clean_names() %>% 
   separate(date, into = c("month", "day", "year")) %>% 
+  mutate(year = as.integer(year),year = if_else(year > 25, 1900 + year, 2000 + year)) %>% 
+  select(-day) %>% 
   relocate(year, month)
 ```
 
@@ -40,5 +43,30 @@ unemployment_df =
 ```
 
 
+**Merging Datasets**
+```{r}
 
+```
+
+
+## Problem 2
+
+```{r}
+trashwheel_df = 
+  read_excel("./fivethirtyeight_datasets/trashwheelcollection.xlsx", 
+    sheet = "Mr. Trash Wheel",
+    na = c("NA",".","")) %>% 
+  janitor::clean_names() %>% 
+  select(-x15, -x16) %>% 
+  mutate(sports_balls = as.integer(round(sports_balls))) 
+```
+
+**Read and Clean Professor Trash Wheel and Gwynda Trash Wheel sheet**
+```{r}
+professor_trashwheel_df =  
+  read_excel( "./fivethirtyeight_datasets/trashwheelcollection.xlsx",
+    sheet = "Professor Trash Wheel",
+    na = c("NA", ".", "")) %>% 
+  janitor::clean_names() 
+```
 
