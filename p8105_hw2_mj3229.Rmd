@@ -15,9 +15,11 @@ polsmonth_df =
   read_csv("./fivethirtyeight_datasets/pols-month.csv") %>% 
   janitor::clean_names() %>% 
   separate(mon, into = c("year", "month", "day")) %>% 
-  mutate(month = month(as.integer(month), label = TRUE, abbr = FALSE)) %>% 
+  mutate(month = month(as.integer(month), label = TRUE, abbr = FALSE),
+    year = as.integer(year),) %>% 
   mutate(president = if_else(prez_gop == 1, "gop", "dem")) %>% 
   select(-prez_gop, -prez_dem, -day)
+  knitr::kable(head(polsmonth_df, 8))
 ```
 
 **Cleaning snp data**
@@ -29,6 +31,7 @@ snp_df =
   mutate(year = as.integer(year),year = if_else(year > 25, 1900 + year, 2000 + year)) %>% 
   select(-day) %>% 
   relocate(year, month)
+  knitr::kable(head(snp_df, 8))
 ```
 
 **Cleaning unemployment data**
@@ -39,15 +42,21 @@ unemployment_df =
   pivot_longer(
     jan:dec,
     names_to = "month",
-    values_to = "percentage of unemployment")
+    values_to = "percentage of unemployment") %>% 
+  mutate(year = as.integer(year))
+  knitr::kable(head(unemployment_df, 8))
 ```
 
 
 **Merging Datasets**
 ```{r}
-
+final_df =
+  left_join(polsmonth_df, snp_df, by = c("year", "month"))
+  left_join(final_df,unemployment_df,by = c("year", "month"))
+  knitr::kable(head(final_df, 8))
 ```
 
+## Five Thirty Eight Data Analysis
 
 ## Problem 2
 
@@ -58,15 +67,45 @@ trashwheel_df =
     na = c("NA",".","")) %>% 
   janitor::clean_names() %>% 
   select(-x15, -x16) %>% 
-  mutate(sports_balls = as.integer(round(sports_balls))) 
+  mutate(sports_balls = as.integer(round(sports_balls)),
+         year = as.integer(year),
+         trash_wheel = "mr.trash wheel")
 ```
 
-**Read and Clean Professor Trash Wheel and Gwynda Trash Wheel sheet**
+**Read and Clean Professor Trash Wheel and Gwynnda Trash Wheel sheet**
 ```{r}
 professor_trashwheel_df =  
   read_excel( "./fivethirtyeight_datasets/trashwheelcollection.xlsx",
     sheet = "Professor Trash Wheel",
     na = c("NA", ".", "")) %>% 
-  janitor::clean_names() 
+  janitor::clean_names() %>% 
+  mutate(
+    year = as.integer(year),
+    trash_wheel = "professor trash wheel")
+  
+
+
+gwynnda_trashwheel_df =  
+  read_excel( "./fivethirtyeight_datasets/trashwheelcollection.xlsx",
+    sheet = "Gwynnda Trash Wheel",
+    na = c("NA", ".", "")) %>% 
+  janitor::clean_names() %>% 
+  mutate(
+    year = as.integer(year),
+    trash_wheel = "gwynnda trash wheel")
 ```
+
+**Combining Datasets**
+```{r}
+combinewheel_df = 
+  bind_rows(trashwheel_df, professor_trashwheel_df, gwynnda_trashwheel_df) %>% 
+  janitor::clean_names() %>% 
+  relocate(trash_wheel, dumpster) %>% 
+  select(trash_wheel:homes_powered)
+```
+
+## Mr Trashwheel Data Analysis
+
+
+
 
