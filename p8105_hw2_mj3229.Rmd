@@ -28,7 +28,10 @@ snp_df =
   read_csv("./fivethirtyeight_datasets/snp.csv") %>% 
   janitor::clean_names() %>% 
   separate(date, into = c("month", "day", "year")) %>% 
-  mutate(year = as.integer(year),year = if_else(year > 25, 1900 + year, 2000 + year)) %>% 
+ mutate(
+  month = month(as.integer(month), label = TRUE, abbr = FALSE),
+  year  = as.integer(year),
+  year  = if_else(year > 25, 1900 + year, 2000 + year))%>% 
   select(-day) %>% 
   relocate(year, month)
   knitr::kable(head(snp_df, 8))
@@ -42,8 +45,22 @@ unemployment_df =
   pivot_longer(
     jan:dec,
     names_to = "month",
-    values_to = "percentage of unemployment") %>% 
-  mutate(year = as.integer(year))
+    values_to = "percentage_unemployment") %>% 
+  mutate(    
+    year = as.integer(year),
+    month = recode(month,
+                   jan = "January",
+                   feb = "February",
+                   mar = "March",
+                   apr = "April",
+                   may = "May",
+                   jun = "June",
+                   jul = "July",
+                   aug = "August",
+                   sep = "September",
+                   oct = "October",
+                   nov = "November",
+                   dec = "December"))
   knitr::kable(head(unemployment_df, 8))
 ```
 
@@ -51,22 +68,34 @@ unemployment_df =
 **Merging Datasets**
 ```{r}
 final_df =
-  left_join(polsmonth_df, snp_df, by = c("year", "month"))
-  left_join(final_df,unemployment_df,by = c("year", "month"))
+  left_join(polsmonth_df, snp_df, by = c("year", "month")) %>% 
+  left_join(unemployment_df,by = c("year", "month")) %>% 
+  relocate(year, month, president, close, percentage_unemployment)
   knitr::kable(head(final_df, 8))
 ```
 
 ## Five Thirty Eight Data Analysis
+
+The polsmonth_df data set contains information on number of national politicians who are democratic vs republican. It included variables such as **gov_gop**, **sen_gop**, and **rep_gop** to indicate number of republican governers/senators on associated dates and **gov_dem** etc. to indicate democratice governers/senators on associated date. The **prez_gop** variable was mutated to represented if the president was republican through a binary format (later edited). 
+
+The snp_df data set contains observations related to Standard & Poor's Stock market index, which is used as a representative measure of the stock market as a whole. This is indicated by the *close** closing values of the S&P stock index on the associated date (month and year).
+
+The unemployment_df data set contains information on the percentage of unemployment throughout the different months of the year. This is indicated by **year** and **month** that was formatted through `pivot_longer`.
+
+The final_df dataset has a total of `r nrow(final_df)` rows and `r ncol(final_df)` columns. It is merged through the year and month columns of all three datasets. The range of years goes from `r min(final_df$year)` to 
+`r max(final_df$year)` and key variables include **close**, **percentage_unemployment** , **president**, and associated dates to see politics and its relation to outcomes in unemployment rates and values of the stock index. 
+
+
 
 ## Problem 2
 
 ```{r}
 trashwheel_df = 
   read_excel("./fivethirtyeight_datasets/trashwheelcollection.xlsx", 
-    sheet = "Mr. Trash Wheel",
-    na = c("NA",".","")) %>% 
+     sheet = "Mr. Trash Wheel",
+     range = "A2:N709",
+     na = c("NA",".","")) %>% 
   janitor::clean_names() %>% 
-  select(-x15, -x16) %>% 
   mutate(sports_balls = as.integer(round(sports_balls)),
          year = as.integer(year),
          trash_wheel = "mr.trash wheel")
@@ -77,6 +106,7 @@ trashwheel_df =
 professor_trashwheel_df =  
   read_excel( "./fivethirtyeight_datasets/trashwheelcollection.xlsx",
     sheet = "Professor Trash Wheel",
+    range = "A2:L134",
     na = c("NA", ".", "")) %>% 
   janitor::clean_names() %>% 
   mutate(
@@ -85,20 +115,21 @@ professor_trashwheel_df =
   
 
 
-gwynnda_trashwheel_df =  
+gwynns_trashwheel_df =  
   read_excel( "./fivethirtyeight_datasets/trashwheelcollection.xlsx",
-    sheet = "Gwynnda Trash Wheel",
+    sheet = "Gwynns Falls Trash Wheel",
+    range = "A2:K351",
     na = c("NA", ".", "")) %>% 
   janitor::clean_names() %>% 
   mutate(
     year = as.integer(year),
-    trash_wheel = "gwynnda trash wheel")
+    trash_wheel = "gwynns trash wheel")
 ```
 
 **Combining Datasets**
 ```{r}
 combinewheel_df = 
-  bind_rows(trashwheel_df, professor_trashwheel_df, gwynnda_trashwheel_df) %>% 
+  bind_rows(trashwheel_df, professor_trashwheel_df, gwynns_trashwheel_df) %>% 
   janitor::clean_names() %>% 
   relocate(trash_wheel, dumpster) %>% 
   select(trash_wheel:homes_powered)
@@ -106,6 +137,48 @@ combinewheel_df =
 
 ## Mr Trashwheel Data Analysis
 
+
+## Problem 3
+
+```{r}
+zori_df = 
+  read_csv("./zillow_data/zori.csv") %>% 
+  janitor::clean_names() %>% 
+  relocate(county_name) %>% 
+  select(-state, county = county_name) %>% 
+  mutate(county = county %>% 
+            str_replace("New York County", "New York") %>% 
+            str_replace("Kings County", "Kings") %>%
+            str_replace("Queens County", "Queens") %>%
+            str_replace("Bronx County", "Bronx")) %>%
+  pivot_longer(
+    x2015_01_31:x2024_08_31,
+    names_to = "date",
+    values_to = "zillow observed rent index")
+  knitr::kable(head(zori_df, 8))
+
+
+neighborhood_df = 
+  read_csv("./zillow_data/zip_codes.csv") %>% 
+  janitor::clean_names() %>% 
+  relocate(county, neighborhood)
+  knitr::kable(head(neighborhood_df, 8))
+```
+
+**Merging Datasets**
+
+```{r}
+zillow_df = 
+  left_join(zori_df, neighborhood_df, by = c("county")) %>% 
+  janitor::clean_names()
+  knitr::kable(head(zillow_df, 8))
+```
+
+
+## Zillow Data Analysis
+
+The dataset contains a total of `r nrow(zillow_df)` observations across `r ncol(zillow_df)` variables. 
+There are `r n_distinct(zillow_df$zip_code)` unique ZIP codes represented and `r n_distinct(zillow_df$neighborhood)` unique neighborhoods.
 
 
 
