@@ -129,7 +129,7 @@ gwynns_trashwheel_df =
 **Combining Datasets**
 ```{r}
 combinewheel_df = 
-  bind_rows(trashwheel_df, professor_trashwheel_df, gwynns_trashwheel_df) %>% 
+  bind_rows(trashwheel_df, professor_trashwheel_df, gwynns_trashwheel_df) %>%
   janitor::clean_names() %>% 
   relocate(trash_wheel, dumpster) %>% 
   select(trash_wheel:homes_powered)
@@ -158,7 +158,9 @@ zori_df =
             str_replace("New York County", "New York") %>% 
             str_replace("Kings County", "Kings") %>%
             str_replace("Queens County", "Queens") %>%
-            str_replace("Bronx County", "Bronx")) %>%
+            str_replace("Bronx County", "Bronx") %>%
+            str_replace("Richmond County", "Richmond")) %>% 
+  rename(zip_code = region_name) %>% 
   pivot_longer(
     x2015_01_31:x2024_08_31,
     names_to = "date",
@@ -177,8 +179,11 @@ neighborhood_df =
 
 ```{r}
 zillow_df = 
-  left_join(zori_df, neighborhood_df, by = c("county")) %>% 
-  janitor::clean_names()
+  left_join(zori_df, neighborhood_df, by = c("zip_code")) %>% 
+  janitor::clean_names() %>% 
+  select(-county_y) %>% 
+  rename(county = county_x) %>% 
+  relocate(county, neighborhood, zip_code, zillow_observed_rent_index)
   knitr::kable(head(zillow_df, 8))
 ```
 
