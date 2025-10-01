@@ -76,11 +76,11 @@ final_df =
 
 ## Five Thirty Eight Data Analysis
 
-The polsmonth_df data set contains information on number of national politicians who are democratic vs republican. It included variables such as **gov_gop**, **sen_gop**, and **rep_gop** to indicate number of republican governers/senators on associated dates and **gov_dem** etc. to indicate democratice governers/senators on associated date. The **prez_gop** variable was mutated to represented if the president was republican through a binary format (later edited). 
+The polsmonth_df dataset contains information on number of national politicians who are democratic vs republican. It included variables such as **gov_gop**, **sen_gop**, and **rep_gop** to indicate number of republican governers/senators on associated dates and **gov_dem** etc. to indicate democratice governers/senators on associated date. The **prez_gop** variable was mutated to represented if the president was republican through a binary format (later edited). 
 
-The snp_df data set contains observations related to Standard & Poor's Stock market index, which is used as a representative measure of the stock market as a whole. This is indicated by the *close** closing values of the S&P stock index on the associated date (month and year).
+The snp_df dataset contains observations related to Standard & Poor's Stock market index, which is used as a representative measure of the stock market as a whole. This is indicated by the *close** closing values of the S&P stock index on the associated date (month and year).
 
-The unemployment_df data set contains information on the percentage of unemployment throughout the different months of the year. This is indicated by **year** and **month** that was formatted through `pivot_longer`.
+The unemployment_df dataset contains information on the percentage of unemployment throughout the different months of the year. This is indicated by **year** and **month** that was formatted through `pivot_longer`.
 
 The final_df dataset has a total of `r nrow(final_df)` rows and `r ncol(final_df)` columns. It is merged through the year and month columns of all three datasets. The range of years goes from `r min(final_df$year)` to 
 `r max(final_df$year)` and key variables include **close**, **percentage_unemployment** , **president**, and associated dates to see politics and its relation to outcomes in unemployment rates and values of the stock index. 
@@ -135,7 +135,15 @@ combinewheel_df =
   select(trash_wheel:homes_powered)
 ```
 
-## Mr Trashwheel Data Analysis
+## Mr. Trashwheel Data Analysis
+The Mr. Trashwheel dataset includes information on the Mr. Trash Wheel waster-wheel vessel and the trash it removes from the Inner Harbor. The professor_trashweel_df, trashwheel_df, and gwynns_trashwheel_df datasets give info on the litter type by the date collected and has an additional column added **trash_wheel** indicating which dataset it is from. The combinewheel_df is a combined product of the three datasets and indicated the amount of different litter collected, date of collection, and which location the data is from. 
+
+The total weight of trash collected by Professor Trash Wheel is `r sum(professor_trashwheel_df$weight_tons, na.rm = TRUE)` tons and the total number of cigarette butts collected by Gwynnda in June of 2022 is In addition, the total number of cigarette butts collected by Gwynnda in June 2022 was 
+`r gwynns_trashwheel_df %>% 
+     filter(year == 2022, month == "June") %>% 
+     summarise(total_cig_butts = sum(cigarette_butts, na.rm = TRUE)) %>% 
+     pull(total_cig_butts)` butts.
+
 
 
 ## Problem 3
