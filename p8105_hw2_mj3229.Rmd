@@ -3,7 +3,8 @@ title: "Homework 2"
 subtitle: "Mahitha Jangeti"
 output: github_document
 ---
-
+Mahitha Jangeti
+11/1/25
 ```{r setup}
 library(tidyverse)
 library(readxl)
@@ -150,7 +151,7 @@ The total weight of trash collected by Professor Trash Wheel is `r sum(professor
 
 ```{r}
 zori_df = 
-  read_csv("./zillow_data/zori.csv") %>% 
+  read_csv("./zillow_data/zori.csv", na = c("NA", ".", "")) %>% 
   janitor::clean_names() %>% 
   relocate(county_name) %>% 
   select(-state, county = county_name) %>% 
@@ -169,7 +170,7 @@ zori_df =
 
 
 neighborhood_df = 
-  read_csv("./zillow_data/zip_codes.csv") %>% 
+  read_csv("./zillow_data/zip_codes.csv", na = c("NA", ".", "")) %>% 
   janitor::clean_names() %>% 
   relocate(county, neighborhood)
   knitr::kable(head(neighborhood_df, 8))
@@ -179,10 +180,8 @@ neighborhood_df =
 
 ```{r}
 zillow_df = 
-  left_join(zori_df, neighborhood_df, by = c("zip_code")) %>% 
+  left_join(zori_df, neighborhood_df, by = c("zip_code", "county"))%>%
   janitor::clean_names() %>% 
-  select(-county_y) %>% 
-  rename(county = county_x) %>% 
   relocate(county, neighborhood, zip_code, zillow_observed_rent_index)
   knitr::kable(head(zillow_df, 8))
 ```
@@ -190,8 +189,39 @@ zillow_df =
 
 ## Zillow Data Analysis
 
-The dataset contains a total of `r nrow(zillow_df)` observations across `r ncol(zillow_df)` variables. 
-There are `r n_distinct(zillow_df$zip_code)` unique ZIP codes represented and `r n_distinct(zillow_df$neighborhood)` unique neighborhoods.
+The dataset contains a total of `r nrow(zillow_df)` observations across `r ncol(zillow_df)` variables.There are `r n_distinct(zillow_df$zip_code)` unique ZIP codes represented and `r n_distinct(zillow_df$neighborhood)` unique neighborhoods. To tidy the data, I began with zori_df and renamed county names to only include the name without "count" in order to merge datasets by the variable. Additionally, region_name was renamed to zip_code to merge. Lastly, I used `pivot_longer` to have ziro and date on two separate columns. The neighborhood_df didn't require too much tidying as I relocated the variables. Lastly, the merged dataset: zillow_df was merged through **zip_code** and **county** to display zori based on neighborhood, county, and zipcode. 
 
+**Missing zipcodes from Zillow Rental Price dataset**
 
+```{r}
+missing_zips = 
+  anti_join(neighborhood_df, zori_df, by = c("zip_code", "county"))
+knitr::kable(head(missing_zips, 10))
+```
+
+Some missing zipcodes include 10464, 10474, 10475, 10499, 10550. The rest can be found from generating missing_zips. There are 174.This may be the case because some zip codes are correlated with areas that lack residential housing or that are not being rented by Zillow. They could also be associated with bigger public buildings such as airports or industrial zones. 
+
+## Comparing Rental Prices in 2021 to 2020 
+
+```{r}
+jan_compare = 
+  zillow_df %>%
+  filter(date %in% c("x2020_01_31", "x2021_01_31")) %>%
+  select(zip_code, county, neighborhood, date, zillow_observed_rent_index) %>% 
+  pivot_wider(
+    names_from = "date",
+    values_from = "zillow_observed_rent_index") %>% 
+  mutate(change = x2021_01_31 - x2020_01_31)
+```
+
+```{r}
+top_ten =
+  jan_compare %>% 
+  select(change, zip_code, county, neighborhood) %>% 
+  arrange(change) %>% 
+  slice(1:10)
+knitr::kable(head(top_ten, 10))
+```
+
+The 10 zipcodes with the largest rental price declines between January 2020 and January 2021 are mostly in Manhattan.We see neighborhoods such as Lower East Side, Soho, Chelsea, Gramercy Park, and etc. The decreases were significant as they were all higher than $600 on average. This was during covid so more people were probably moving back to the suburbs, where they wouldn't have to pay so much. They could also be moving to other boroughs that were cheaper (especially during a time of unemployment). This may have resulted in declines in rent and demand for high-cost apartments. On the other hand, boroughs such as Brooklyn or Bronx may have experienced smaller declines resulting them to not be apparent in this table.
 
